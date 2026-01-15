@@ -3,8 +3,6 @@ from dotenv import load_dotenv
 load_dotenv()
 from pathlib import Path
 import os
-import dj_database_url
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -12,12 +10,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-secret-for-local")
 
 
-DEBUG=False
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
 
-
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 
@@ -36,7 +32,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # ADD THIS
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -44,7 +39,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 
 AUTH_USER_MODEL='auth.User'
 
@@ -76,11 +70,11 @@ WSGI_APPLICATION = 'bookmyseat.wsgi.application'
 
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv("DATABASE_URL")
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
-
 
 
 
@@ -110,9 +104,7 @@ USE_I18N = True
 USE_TZ = True
 
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
+STATIC_URL = 'static/'
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -132,4 +124,3 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 DEFAULT_FROM_EMAIL = 'BookMySeat <noreply@bookmyseat.com>'
-
