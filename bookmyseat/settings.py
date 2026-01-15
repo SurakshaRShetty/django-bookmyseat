@@ -1,4 +1,3 @@
-
 from dotenv import load_dotenv
 load_dotenv()
 from pathlib import Path
@@ -14,8 +13,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-secret-for-local")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
 
-# ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
-ALLOWED_HOSTS = ['.vercel.app']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 
@@ -78,9 +76,9 @@ DATABASES = {
     }
 }
 
-DATABASES['default'] = dj_database_url.parse('postgresql://django_bookmyshow_a1jk_user:4DH9DQ2JsdZoz0FcYGrcGR5rHLu481Vg@dpg-d5k8kvvpm1nc73ftn2hg-a.virginia-postgres.render.com/django_bookmyshow_a1jk')
+DATABASES['default'] = dj_database_url.parse('postgresql://bookmyshow_django_kkhq_user:HN7z26Y81TvVAZDKMuBRcQp85WoV2O5g@dpg-d5kcnrkoud1c73egs1ng-a.virginia-postgres.render.com/bookmyshow_django_kkhq')
 
-# postgresql://django_bookmyshow_a1jk_user:4DH9DQ2JsdZoz0FcYGrcGR5rHLu481Vg@dpg-d5k8kvvpm1nc73ftn2hg-a.virginia-postgres.render.com/django_bookmyshow_a1jk
+# postgresql://bookmyshow_django_kkhq_user:HN7z26Y81TvVAZDKMuBRcQp85WoV2O5g@dpg-d5kcnrkoud1c73egs1ng-a.virginia-postgres.render.com/bookmyshow_django_kkhq
 
 
 AUTH_PASSWORD_VALIDATORS = [
