@@ -12,6 +12,8 @@ SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-secret-for-local")
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
+ALLOWED_HOSTS = ['.vercel.app']
+
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
