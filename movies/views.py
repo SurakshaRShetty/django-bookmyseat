@@ -163,6 +163,7 @@ Enjoy your show!
 def admin_dashboard(request):
     context = {
         "total_bookings": Booking.objects.count(),
+        "total_revenue": Booking.objects.count() * PRICE_PER_SEAT,
         "popular_movies": Movie.objects.annotate(
             bookings=Count("booking")
         ).order_by("-bookings")[:5],
