@@ -13,12 +13,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv(
     "SECRET_KEY",
-    "django-insecure-c8aetlj(=vp90n@#yoc^&d(_6ivp(d!bv-4-f!r$lawptjzrwu"
+    "django-insecure-change-this-in-production"
 )
 
-DEBUG = True
+DEBUG = False   #   MUST be False on Vercel
 
-ALLOWED_HOSTS = ['.vercel.app']
+ALLOWED_HOSTS = [
+    ".vercel.app",
+    "127.0.0.1",
+    "localhost",
+]
 
 # ======================
 # APPLICATIONS
@@ -31,6 +35,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
+    # local apps
     "users",
     "movies",
 ]
@@ -41,6 +47,10 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+
+    #REQUIRED for static files on Vercel
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -76,33 +86,27 @@ TEMPLATES = [
 WSGI_APPLICATION = "bookmyseat.wsgi.application"
 
 # ======================
-# DATABASE (SQLITE – TRAINING STYLE)
+# DATABASE
 # ======================
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.parse(
+        os.getenv(
+            "DATABASE_URL",
+            "postgresql://django_bookmyshow_nvoy_user:aPOMKEPWz4l8gWMAxG33KioCUnLN2ZWM@dpg-d5ksvnh4tr6s73cp0oo0-a.virginia-postgres.render.com/django_bookmyshow_nvoy"
+        )
+    )
 }
-DATABASES["default"] = dj_database_url.parse('postgresql://django_bookmyshow_nvoy_user:aPOMKEPWz4l8gWMAxG33KioCUnLN2ZWM@dpg-d5ksvnh4tr6s73cp0oo0-a.virginia-postgres.render.com/django_bookmyshow_nvoy')
+
 # ======================
 # PASSWORD VALIDATION
 # ======================
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 # ======================
@@ -115,14 +119,26 @@ USE_I18N = True
 USE_TZ = True
 
 # ======================
-# STATIC & MEDIA
+# STATIC FILES (CRITICAL)
 # ======================
 
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+STATICFILES_STORAGE = (
+    "whitenoise.storage.CompressedManifestStaticFilesStorage"
+)
+
+# ======================
+# MEDIA FILES (DISABLE ON VERCEL)
+# ======================
+#
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = "/tmp/media"   # temporary only (won’t persist)
 
 # ======================
 # DEFAULTS
@@ -138,7 +154,6 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
