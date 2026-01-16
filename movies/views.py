@@ -203,11 +203,11 @@ Enjoy your show!
                 recipient_list=[request.user.email],
                 fail_silently=False,
             )
-            logger.info(f"Email sent successfully to {request.user.email}")
+            print(f"Email sent successfully to {request.user.email}")
         else:
-            logger.warning(f"Cannot send email. User email: {request.user.email}, Host user configured: {bool(settings.EMAIL_HOST_USER)}")
+            print(f"Cannot send email. User email: {request.user.email}, Host user configured: {bool(settings.EMAIL_HOST_USER)}")
     except Exception as e:
-        logger.error(f"Failed to send email: {str(e)}", exc_info=True)
+        print(f"Failed to send email: {str(e)}", exc_info=True)
 
     return redirect("profile")
 
