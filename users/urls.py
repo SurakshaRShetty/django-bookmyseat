@@ -1,14 +1,6 @@
 from django.urls import path
-from .views import (
-    register,
-    login_view,
-    profile,
-    reset_password,
-    home,
-    test_email,
-)
+from .views import register, login_view, profile, reset_password, home
 from django.contrib.auth import views as auth_views
-
 
 class CustomLogoutView(auth_views.LogoutView):
     def get(self, request, *args, **kwargs):
@@ -33,7 +25,4 @@ urlpatterns = [
     path('password-reset-complete/',
          auth_views.PasswordResetCompleteView.as_view(template_name='users/password_reset_complete.html'),
          name='password_reset_complete'),
-          path("test-email/", test_email),
 ]
-
-
