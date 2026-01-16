@@ -207,7 +207,7 @@ Enjoy your show!
         else:
             print(f"Cannot send email. User email: {request.user.email}, Host user configured: {bool(settings.EMAIL_HOST_USER)}")
     except Exception as e:
-        print(f"Failed to send email: {str(e)}", exc_info=True)
+        print(f"Failed to send email: {str(e)}")
 
     return redirect("profile")
 
