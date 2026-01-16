@@ -8,11 +8,13 @@ from django.db.models import Count
 from django.http import HttpResponse
 
 import stripe
+import logging
 
 from .models import Movie, Theater, Seat, Booking
 from .utils import release_expired_seats
 
 PRICE_PER_SEAT = 200  # INR
+logger = logging.getLogger(__name__)
 
 
 # ======================
@@ -191,9 +193,16 @@ Enjoy your show!
 """,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
+                fail_silently=False,
             )
-    except Exception:
-        pass
+            logger.info(f"Email sent successfully to {request.user.email}")
+        else:
+                logger.warning("User has no email address; skipping email sending.")
+
+    except Exception as e:
+            logger.error(f"Failed to send email: {str(e)}")
+
+        
 
     return redirect("profile")
 
