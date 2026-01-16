@@ -181,15 +181,23 @@ def payment_success(request, theater_id):
         seat.save()
         seat_numbers.append(seat.seat_number)
 
-    # email (safe)
+    # Send email with proper error handling
     try:
-        if request.user.email:
+        if request.user.email and settings.EMAIL_HOST_USER:
             send_mail(
                 subject="🎟 Ticket Booking Confirmation",
-                message=f"""
-Movie: {seat.theater.movie.name}
+                message=f"""Hi {request.user.username},
+
+Your booking is confirmed!
+
+Movie: {seats.first().theater.movie.name}
+Theater: {seats.first().theater.name}
 Seats: {', '.join(seat_numbers)}
+Total: ₹{len(seat_numbers) * PRICE_PER_SEAT}
+
 Enjoy your show!
+
+- BookMySeat Team
 """,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
@@ -197,12 +205,9 @@ Enjoy your show!
             )
             logger.info(f"Email sent successfully to {request.user.email}")
         else:
-                logger.warning("User has no email address; skipping email sending.")
-
+            logger.warning(f"Cannot send email. User email: {request.user.email}, Host user configured: {bool(settings.EMAIL_HOST_USER)}")
     except Exception as e:
-            logger.error(f"Failed to send email: {str(e)}")
-
-        
+        logger.error(f"Failed to send email: {str(e)}", exc_info=True)
 
     return redirect("profile")
 
