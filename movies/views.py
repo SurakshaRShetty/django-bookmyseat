@@ -5,22 +5,32 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
 from django.db.models import Count
+from django.http import HttpResponse
+
 import stripe
+
 from .models import Movie, Theater, Seat, Booking
 from .utils import release_expired_seats
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
-PRICE_PER_SEAT = 200  
+PRICE_PER_SEAT = 200  # INR
+
+
+# ======================
+# MOVIES
+# ======================
 
 def movie_list(request):
     movies = Movie.objects.all()
+
     if request.GET.get("search"):
         movies = movies.filter(name__icontains=request.GET["search"])
     if request.GET.get("genre"):
         movies = movies.filter(genre__iexact=request.GET["genre"])
     if request.GET.get("language"):
         movies = movies.filter(language__iexact=request.GET["language"])
+
     return render(request, "movies/movie_list.html", {"movies": movies})
+
 
 def movie_detail(request, movie_id):
     movie = get_object_or_404(Movie, id=movie_id)
@@ -34,6 +44,11 @@ def theater_list(request, movie_id):
         "movie": movie,
         "theaters": theaters
     })
+
+
+# ======================
+# SEAT BOOKING
+# ======================
 
 @login_required
 def book_seats(request, theater_id):
@@ -58,6 +73,7 @@ def book_seats(request, theater_id):
         "seats": seats
     })
 
+
 @login_required
 def confirm_booking(request, theater_id):
     release_expired_seats()
@@ -72,7 +88,6 @@ def confirm_booking(request, theater_id):
     if not seats.exists():
         return redirect("movie_list")
 
-    #  WHEN USER CLICKS CONFIRM
     if request.method == "POST":
         return redirect("make_payment", theater_id=theater.id)
 
@@ -82,9 +97,21 @@ def confirm_booking(request, theater_id):
     })
 
 
+# ======================
+# PAYMENT (STRIPE)
+# ======================
+
 @login_required
 def make_payment(request, theater_id):
     release_expired_seats()
+
+    if not settings.STRIPE_SECRET_KEY:
+        return HttpResponse(
+            "Payment is temporarily unavailable. Stripe key missing.",
+            status=503
+        )
+
+    stripe.api_key = settings.STRIPE_SECRET_KEY
 
     seats = Seat.objects.filter(
         theater_id=theater_id,
@@ -97,29 +124,33 @@ def make_payment(request, theater_id):
 
     amount = seats.count() * PRICE_PER_SEAT
 
-    session = stripe.checkout.Session.create(
-        payment_method_types=["card"],
-        line_items=[{
-            "price_data": {
-                "currency": "inr",
-                "product_data": {
-                    "name": "Movie Tickets",
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[{
+                "price_data": {
+                    "currency": "inr",
+                    "product_data": {
+                        "name": "Movie Tickets",
+                    },
+                    "unit_amount": amount * 100,
                 },
-                "unit_amount": amount * 100,
-            },
-            "quantity": 1,
-        }],
-        mode="payment",
-        success_url=request.build_absolute_uri(
-            f"/movies/theater/{theater_id}/success/"
-        ),
-        cancel_url=request.build_absolute_uri(
-            f"/movies/theater/{theater_id}/confirm/"
-        ),
-        customer_email=request.user.email,
-    )
+                "quantity": 1,
+            }],
+            mode="payment",
+            success_url=request.build_absolute_uri(
+                f"/movies/theater/{theater_id}/success/"
+            ),
+            cancel_url=request.build_absolute_uri(
+                f"/movies/theater/{theater_id}/confirm/"
+            ),
+            customer_email=request.user.email,
+        )
+    except Exception as e:
+        return HttpResponse(f"Stripe error: {str(e)}", status=500)
 
     return redirect(session.url)
+
 
 @login_required
 def payment_success(request, theater_id):
@@ -128,6 +159,9 @@ def payment_success(request, theater_id):
         is_reserved=True,
         reserved_by=request.user
     )
+
+    if not seats.exists():
+        return redirect("movie_list")
 
     seat_numbers = []
 
@@ -145,19 +179,28 @@ def payment_success(request, theater_id):
         seat.save()
         seat_numbers.append(seat.seat_number)
 
-    if request.user.email:
-        send_mail(
-            subject="🎟 Ticket Booking Confirmation",
-            message=f"""
+    # email (safe)
+    try:
+        if request.user.email:
+            send_mail(
+                subject="🎟 Ticket Booking Confirmation",
+                message=f"""
 Movie: {seat.theater.movie.name}
 Seats: {', '.join(seat_numbers)}
 Enjoy your show!
 """,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[request.user.email],
-        )
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[request.user.email],
+            )
+    except Exception:
+        pass
 
     return redirect("profile")
+
+
+# ======================
+# ADMIN DASHBOARD
+# ======================
 
 @staff_member_required
 def admin_dashboard(request):
