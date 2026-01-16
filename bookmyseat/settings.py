@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 load_dotenv()
 
@@ -17,10 +18,7 @@ SECRET_KEY = os.getenv(
 
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-]
+ALLOWED_HOSTS = ['.vercel.app']
 
 # ======================
 # APPLICATIONS
@@ -87,7 +85,7 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
-
+DATABASES["default"] = dj_database_url.parse('postgresql://django_bookmyshow_nvoy_user:aPOMKEPWz4l8gWMAxG33KioCUnLN2ZWM@dpg-d5ksvnh4tr6s73cp0oo0-a.virginia-postgres.render.com/django_bookmyshow_nvoy')
 # ======================
 # PASSWORD VALIDATION
 # ======================
