@@ -127,6 +127,13 @@ def make_payment(request, theater_id):
     amount = seats.count() * PRICE_PER_SEAT
 
     try:
+        success_url = request.build_absolute_uri(
+            f"/movies/theater/{theater_id}/success/"
+        )
+        cancel_url = request.build_absolute_uri(
+            f"/movies/theater/{theater_id}/confirm/"
+        )
+        print(f"Creating Stripe session with success_url: {success_url}")
         session = stripe.checkout.Session.create(
             payment_method_types=["card"],
             line_items=[{
@@ -140,14 +147,11 @@ def make_payment(request, theater_id):
                 "quantity": 1,
             }],
             mode="payment",
-            success_url=request.build_absolute_uri(
-                f"/movies/theater/{theater_id}/success/"
-            ),
-            cancel_url=request.build_absolute_uri(
-                f"/movies/theater/{theater_id}/confirm/"
-            ),
+            success_url=success_url,
+            cancel_url=cancel_url,
             customer_email=request.user.email,
         )
+        print(f"Stripe session created: {session.id}, URL: {session.url}")
     except Exception as e:
         return HttpResponse(f"Stripe error: {str(e)}", status=500)
 
@@ -156,6 +160,8 @@ def make_payment(request, theater_id):
 
 @login_required
 def payment_success(request, theater_id):
+    print(f"Payment success view called for user {request.user.username}")
+    release_expired_seats()
     seats = Seat.objects.filter(
         theater_id=theater_id,
         is_reserved=True,
@@ -163,7 +169,19 @@ def payment_success(request, theater_id):
     )
 
     if not seats.exists():
+        print("No reserved seats found, redirecting to movie_list")
         return redirect("movie_list")
+
+    # Evaluate the queryset once to avoid issues
+    seats = list(seats)
+    if not seats:
+        print("Seats list is empty after evaluation, redirecting")
+        return redirect("movie_list")
+
+    # Get movie and theater details from the first seat
+    first_seat = seats[0]
+    movie = first_seat.theater.movie
+    theater = first_seat.theater
 
     seat_numbers = []
 
@@ -181,17 +199,21 @@ def payment_success(request, theater_id):
         seat.save()
         seat_numbers.append(seat.seat_number)
 
+    print(f"User email: {request.user.email}")
+    print(f"EMAIL_HOST_USER configured: {bool(settings.EMAIL_HOST_USER)}")
+
     # Send email with proper error handling
     try:
         if request.user.email and settings.EMAIL_HOST_USER:
+            print("Attempting to send email")
             send_mail(
                 subject="🎟 Ticket Booking Confirmation",
                 message=f"""Hi {request.user.username},
 
 Your booking is confirmed!
 
-Movie: {seats.first().theater.movie.name}
-Theater: {seats.first().theater.name}
+Movie: {movie.name}
+Theater: {theater.name}
 Seats: {', '.join(seat_numbers)}
 Total: ₹{len(seat_numbers) * PRICE_PER_SEAT}
 
