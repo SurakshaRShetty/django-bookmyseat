@@ -20,18 +20,45 @@ logger = logging.getLogger(__name__)
 # ======================
 # MOVIES
 # ======================
-
 def movie_list(request):
     movies = Movie.objects.all()
 
-    if request.GET.get("search"):
-        movies = movies.filter(name__icontains=request.GET["search"])
-    if request.GET.get("genre"):
-        movies = movies.filter(genre__iexact=request.GET["genre"])
-    if request.GET.get("language"):
-        movies = movies.filter(language__iexact=request.GET["language"])
+    search = request.GET.get("search")
+    genre = request.GET.get("genre")
+    language = request.GET.get("language")
 
-    return render(request, "movies/movie_list.html", {"movies": movies})
+    if search:
+        movies = movies.filter(name__icontains=search)
+
+    if genre:
+        movies = movies.filter(genre__iexact=genre)
+
+    if language:
+        movies = movies.filter(language__iexact=language)
+
+    genres = (
+        Movie.objects
+        .values_list("genre", flat=True)
+        .distinct()
+        .order_by("genre")
+    )
+
+    languages = (
+        Movie.objects
+        .values_list("language", flat=True)
+        .distinct()
+        .order_by("language")
+    )
+
+    return render(request, "movies/movie_list.html", {
+        "movies": movies,
+        "genres": genres,
+        "languages": languages,
+        "selected_genre": genre,
+        "selected_language": language,
+        "search_value": search,
+    })
+
 
 
 def movie_detail(request, movie_id):
