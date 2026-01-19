@@ -1,16 +1,12 @@
-# Virtual environments
-venv/
-.env
-
-# Python cache
+# Python
 __pycache__/
 *.pyc
+venv/
 
-# Database
+# Env
+.env
+
+# Django
 db.sqlite3
-
-# Media uploads
 media/
-
-# VS Code
-.vscode/
+staticfiles/
