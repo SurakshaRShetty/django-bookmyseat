@@ -32,3 +32,9 @@ http://127.0.0.1:8000/admin/
 ### Run the Project Locally
 venv\Scripts\activate
 python manage.py runserver
+
+## Stripe Test Card Details
+Card Number: 4242 4242 4242 4242
+Expiry Date: Any future date (MM/YY)
+CVV: Any 3 digits
+
